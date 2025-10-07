@@ -1170,7 +1170,7 @@ contract BTC_STRATEGY is ERC20, Ownable, ReentrancyGuard {
 
     // BTCB TestNet Token
     address public constant WBTC_TOKEN =
-        payable(0xF15cEc66bF86B488df580E1350e98D63B4E012fA);
+        payable(0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117);
     address public constant WETH_TOKEN =
         payable(0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd);
     address public constant DEAD_ADDRESS =

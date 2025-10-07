@@ -23,8 +23,9 @@ WBNB:               0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd
 
 <!-- Token Configure Steps -->
 1. createPair()
-2. Add LP on Dex
-3. enableTrading()
+2. Approve Router 
+3. Add LP on Dex
+4. enableTrading()
 
 
 <!-- Test Lists -->
@@ -43,6 +44,22 @@ swapTokensAtAmount = (totalSupply * 5) / 10000 = 1000M * 5 / 10000 = 0.5M = 500k
 0.01 BNB / 0.1 B
 0.0001      BNB swap output --> 0.001 B = 1M
 0.000001    BNB swap output --> 9975
+
+
+WBTC 0.3 BNB / 0.3B
+0.0001      BNB swap output --> 0.1 M
+path: ["0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd", "0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117"]
+<!-- Test4: remove PnkSTR Burn -->
+TestWBTC:           0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117
+Total Supply:       10M
+Decimals:           8
+Add LP:             0.03 WBNB / 3M
+
+
+TestBTC_STR:        0xFdbd911F0D8348f67d0A7A2d3f1b0Ac02270370f
+Decimals:           18
+Add LP:             0.01 WBNB / 0.1 Billion
+
 
 <!-- Test3: add UpdateMin&Rewards -->
 <!-- TestWBTC:           0xF15cEc66bF86B488df580E1350e98D63B4E012fA
@@ -66,11 +83,6 @@ Decimals:           18
 Add LP:             0.01 WBNB / 0.1 Billion
 
 
-9999999999999999999999999999
-100000000000000000
-30000000000000000
-30000000000000000
-1000000000000000
 <!-- Test2: fix  swapToPnkSTRAndBurn:: swapExactTokensForTokensSupportingFeeOnTransferTokens -->
 <!-- TestWBTC:           0x4781c12814b26CfB12981E3BC1BcC49022211197
 Total Supply:       1000000000 = 1B

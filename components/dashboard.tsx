@@ -3,16 +3,19 @@
 
 import { useEffect, useState } from "react"
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { multicall, waitForTransactionReceipt, readContract } from '@wagmi/core'
+import { multicall, readContract } from '@wagmi/core'
 import { ethers } from "ethers"; // BigNumber and constants are now part of ethers
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS } from "@/config";
+import { BTCSTR_ADDRESS, BTCSTR_TS, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
+import OrderCard from "./ordercard";
+
 
 type HoldingStats = {
     eth: number;
-    btcSTR: number;
+    wbtc: number;
+    // btcSTR: number;
     burnedBtcSTR: number;
 }
 
@@ -27,9 +30,14 @@ export default function Home() {
     const { isConnected, address, chainId, status } = useAccount();
     const { writeContract, writeContractAsync } = useWriteContract()
     const [activeTab, setActiveTab] = useState<"holding" | "sold">("holding")
+    const [isPending, setIsPending] = useState(false);
+    const [nextOrderId, setNextOrderId] = useState(1);
+
+    const [wbtc2Eth, setWbtc2Eth] = useState(1/1000000)
     const [holdingStats, setHoldingStats] = useState<HoldingStats>({
         eth: 0,
-        btcSTR: 0,
+        wbtc: 0,
+        // btcSTR: 0,
         burnedBtcSTR: 0
     })
 
@@ -48,15 +56,35 @@ export default function Home() {
                     address: BTCSTR_ADDRESS,
                     abi: BTCSTR_ABI,
                     functionName: 'stats',
+
                 });
 
-                console.log('debug contract stats::', result);
+                // const tokenBalance = await readContract(config, {
+                //     address: BTCSTR_ADDRESS,
+                //     abi: BTCSTR_ABI,
+                //     functionName: 'balanceOf',
+                //     args: [BTCSTR_ADDRESS]
+                // })
 
+                const _wbtc2Eth = await readContract(config, {
+                    address: BTCSTR_ADDRESS,
+                    abi: BTCSTR_ABI,
+                    functionName: 'previewSell',
+                    args: [ethers.parseUnits('1', WBTC_DECIMALS)]
+                })
+
+                console.log('debug contract stats::', _wbtc2Eth);
+                if(typeof _wbtc2Eth == 'bigint') {
+                    setWbtc2Eth(Number(ethers.formatEther(_wbtc2Eth)))
+                }
+                // if (!cancelled && Array.isArray(result) && typeof result[0] === 'bigint' && typeof tokenBalance == 'bigint') {
                 if (!cancelled && Array.isArray(result) && typeof result[0] === 'bigint') {
                     setHoldingStats({
-                        eth: Number(ethers.formatEther(result[0])),
-                        btcSTR: Number(ethers.formatEther(result[1])),
-                        burnedBtcSTR: Number(ethers.formatEther(result[2])),
+                        eth: Number(ethers.formatEther(result[1])),
+                        wbtc: Number(ethers.formatUnits(result[2], WBTC_DECIMALS)),
+                        // btcSTR: Number(ethers.formatEther(tokenBalance)),
+                        burnedBtcSTR: Number(ethers.formatEther(result[0])),
+
                     });
                 }
             } catch (error) {
@@ -68,14 +96,14 @@ export default function Home() {
         fetchContractStats();
 
         // Then fetch every 30 seconds
-        const interval = setInterval(fetchContractStats, 30_000);
+        const interval = setInterval(fetchContractStats, 10_000);
 
         // Cleanup when component unmounts or dependencies change
         return () => {
             cancelled = true;
             clearInterval(interval);
         };
-    }, []);
+    }, [isPending]);
 
     useEffect(() => {
         const fetchContractValues = async () => {
@@ -97,33 +125,66 @@ export default function Home() {
                         {
                             address: BTCSTR_ADDRESS,
                             abi: BTCSTR_ABI as any,
-                            functionName: "orders",
+                            functionName: "PROFIT_BPS",
                             args: [],
                         },
-                        // {
-                        //     address: BTCSTR_ADDRESS,
-                        //     abi: BTCSTR_ABI as any,
-                        //     functionName: "PROFIT_BPS",
-                        //     args: [],
-                        // },
+                        {
+                            address: BTCSTR_ADDRESS,
+                            abi: BTCSTR_ABI as any,
+                            functionName: "nextOrderId",
+                            args: [],
+                        },
+
                     ],
                 });
                 // Consider Profit BPS is private
-                // const [_minWbtcBuy, _txReward, _orders, _profitBps] = values
-                const [_minWbtcBuy, _txReward, _orders] = values
-                console.log('debug contract values::', _minWbtcBuy, _txReward, _orders);
+                const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
+                // console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
                 setRewardValues({
-                    minWbtcBuy:  _minWbtcBuy.status == 'success' ? Number(ethers.formatUnits(BigInt(_minWbtcBuy.result as string), 6)) : 0.001,
+                    minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.001,
                     txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.0001,
-                    profitBps: 1200
+                    profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
                 })
+                setNextOrderId(
+                    _nextOrderId.status === 'success'
+                        ? Number(_nextOrderId.result)
+                        : 1
+                )
+                // if (_orders.status !== 'failure')
+                //     setOrders(_orders.result as any);
             } catch (error) {
                 console.error('Error fetching contract values:', error);
             }
 
         }
         fetchContractValues()
-    })
+
+    }, [isPending, BTCSTR_ADDRESS, isConnected])
+
+
+    const handleBuyWBTC = async () => {
+        if (!address || !isConnected) return;
+        try {
+            setIsPending(true);
+            let tx;
+            tx = await writeContractAsync({
+                address: BTCSTR_ADDRESS,
+                abi: BTCSTR_ABI,
+                functionName: "buyWBTC",
+                args: [],
+            });
+            if (!tx) {
+                throw new Error("Transaction object or hash is undefined");
+            }
+            setIsPending(false);
+        } catch (error) {
+            console.error("Flip failed:", error);
+            setIsPending(false);
+        }
+    }
+
+
+
     return (
         <div className="min-h-screen bg-[#15803d]">
             <div className="max-w-5xl mx-auto px-8">
@@ -185,7 +246,7 @@ export default function Home() {
                                     </div>
                                     <div>
                                         <div className="text-white/60 text-sm mb-1">ETH</div>
-                                        <div className="text-white text-3xl font-bold">{holdingStats.eth}</div>
+                                        <div className="text-white text-3xl font-bold">{Number(holdingStats.eth.toFixed(WBTC_DECIMALS))}</div>
                                     </div>
                                 </div>
                             </div>
@@ -193,10 +254,11 @@ export default function Home() {
                             {/* PEPE Card */}
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">🐸</div>
+                                    {/* <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">🐸</div> */}
+                                    <img src="/BitCoin.png" alt="Bitcoin Logo" width={48} height={48} className="bg-white/20 rounded-full" />
                                     <div>
-                                        <div className="text-white/60 text-sm mb-1">BTCSTR</div>
-                                        <div className="text-white text-3xl font-bold">{holdingStats.btcSTR}</div>
+                                        <div className="text-white/60 text-sm mb-1">WBTC</div>
+                                        <div className="text-white text-3xl font-bold">{Number(holdingStats.wbtc.toFixed(WBTC_DECIMALS))}</div>
                                     </div>
                                 </div>
                             </div>
@@ -205,7 +267,7 @@ export default function Home() {
                         {/* Burned Card */}
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                                {/* <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                                     <svg
                                         className="w-6 h-6 text-white"
                                         viewBox="0 0 24 24"
@@ -218,12 +280,13 @@ export default function Home() {
                                         <path d="M12 12L4 7" />
                                         <path d="M12 12l8-5" />
                                     </svg>
-                                </div>
+                                </div> */}
+                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">🐸</div>
                                 <div>
                                     <div className="text-white/60 text-sm mb-1">BURNED $BTCSTR</div>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-white text-3xl font-bold">{holdingStats.burnedBtcSTR}</span>
-                                        <span className="text-white/60 text-sm">({holdingStats.burnedBtcSTR / 10000000}% of 1B)</span>
+                                        <span className="text-white/60 text-sm">({holdingStats.burnedBtcSTR / BTCSTR_TS}% of 1B)</span>
                                     </div>
                                 </div>
                             </div>
@@ -235,7 +298,7 @@ export default function Home() {
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-semibold text-white">Progress to Next Purchase</h2>
                             <div className="text-white/80 text-sm">
-                                Current rewards <span className="font-bold text-white">0.01 ETH</span>
+                                Current rewards <span className="font-bold text-white">{rewardValues.txReward} ETH</span>
                             </div>
                         </div>
 
@@ -244,199 +307,28 @@ export default function Home() {
                             <div className="h-3 bg-white/20 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-500"
-                                    style={{ width: "96.6%" }}
+                                    style={{ width: `${Number(holdingStats.eth / (rewardValues.minWbtcBuy + rewardValues.txReward) * 100)}%` }}
                                 />
                             </div>
-                            <div className="absolute -top-1 right-0 text-white text-sm font-medium">96.6%</div>
+                            <div className="absolute -top-1 right-0 text-white text-sm font-medium">{Number((holdingStats.eth / (rewardValues.minWbtcBuy + rewardValues.txReward) * 100).toFixed(1))}%</div>
                         </div>
 
                         {/* Progress Text */}
                         <p className="text-white/80 text-sm mb-6">
-                            When the machine acquires the missing <span className="text-green-400 font-semibold">{rewardValues.minWbtcBuy + rewardValues.txReward - holdingStats.eth } ETH</span>, the
+                            When the machine acquires the missing <span className="text-green-400 font-semibold">{Number((rewardValues.minWbtcBuy + rewardValues.txReward - holdingStats.eth).toFixed(WBTC_DECIMALS))} ETH</span>, the
                             first entity to trigger the functions below will process the mechanism forward and earn a reward.
                         </p>
 
                         {/* Buy Button */}
-                        <button className="w-full bg-[#a8d5ba] hover:bg-[#98c5aa] text-[#1e4d2b] py-4 rounded-xl text-lg font-semibold transition-colors">
+                        <button className="w-full bg-[#a8d5ba] hover:bg-[#98c5aa] text-[#1e4d2b] py-4 rounded-xl text-lg font-semibold transition-colors"
+                            onClick={() => { handleBuyWBTC() }}
+                        >
                             Buy
                         </button>
                     </div>
 
                     {/* Orders Section */}
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mt-6">
-                        {/* Orders Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-semibold text-white">Orders</h2>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setActiveTab("holding")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "holding"
-                                        ? "bg-white/20 text-white"
-                                        : "bg-transparent text-white/60 hover:bg-white/10 hover:text-white"
-                                        }`}
-                                >
-                                    Currently Holding
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("sold")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "sold"
-                                        ? "bg-white/20 text-white"
-                                        : "bg-transparent text-white/60 hover:bg-white/10 hover:text-white"
-                                        }`}
-                                >
-                                    Sold Pepe
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Conditional Rendering based on active tab */}
-                        {activeTab === "holding" ? (
-                            // Orders Grid
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Order #2 */}
-                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-                                    {/* Order Header */}
-                                    <div className="flex items-center justify-between mb-6">
-                                        <span className="text-white text-lg font-semibold">#2</span>
-                                        <span className="bg-green-500/30 text-green-300 px-3 py-1 rounded-full text-xs font-medium">
-                                            Open
-                                        </span>
-                                    </div>
-
-                                    {/* Order Details */}
-                                    <div className="space-y-3 mb-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">ETH SPENT</span>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                                                </svg>
-                                                <span className="text-white font-semibold">5.077</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">PEPE BOUGHT</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">🐸</span>
-                                                <span className="text-white font-semibold">2.27B</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">EST. VALUE (NOW)</span>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                                                </svg>
-                                                <span className="text-white font-semibold">4.912</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">TARGET TO SELL</span>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                                                </svg>
-                                                <span className="text-white font-semibold">6.092</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Progress Bar */}
-                                    <div className="relative mb-4">
-                                        <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
-                                                style={{ width: "80.6%" }}
-                                            />
-                                        </div>
-                                        <div className="absolute -top-1 right-0 text-white/80 text-xs">80.6%</div>
-                                    </div>
-
-                                    {/* Sell Button */}
-                                    <button className="w-full bg-[#a8d5ba] hover:bg-[#98c5aa] text-[#1e4d2b] py-3 rounded-lg text-sm font-semibold transition-colors">
-                                        Sell
-                                    </button>
-                                </div>
-
-                                {/* Order #1 */}
-                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6">
-                                    {/* Order Header */}
-                                    <div className="flex items-center justify-between mb-6">
-                                        <span className="text-white text-lg font-semibold">#1</span>
-                                        <span className="bg-green-500/30 text-green-300 px-3 py-1 rounded-full text-xs font-medium">
-                                            Open
-                                        </span>
-                                    </div>
-
-                                    {/* Order Details */}
-                                    <div className="space-y-3 mb-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">ETH SPENT</span>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                                                </svg>
-                                                <span className="text-white font-semibold">5.063</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">PEPE BOUGHT</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">🐸</span>
-                                                <span className="text-white font-semibold">2.24B</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">EST. VALUE (NOW)</span>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                                                </svg>
-                                                <span className="text-white font-semibold">4.841</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-white/60 text-sm">TARGET TO SELL</span>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                                                </svg>
-                                                <span className="text-white font-semibold">6.075</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Progress Bar */}
-                                    <div className="relative mb-4">
-                                        <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
-                                                style={{ width: "79.7%" }}
-                                            />
-                                        </div>
-                                        <div className="absolute -top-1 right-0 text-white/80 text-xs">79.7%</div>
-                                    </div>
-
-                                    {/* Sell Button */}
-                                    <button className="w-full bg-[#a8d5ba] hover:bg-[#98c5aa] text-[#1e4d2b] py-3 rounded-lg text-sm font-semibold transition-colors">
-                                        Sell
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            // Empty state for Sold Pepe
-                            <div className="flex items-center justify-center py-16">
-                                <p className="text-white/60 text-lg">No PEPE sold yet</p>
-                            </div>
-                        )}
-                    </div>
-
+                    <OrderCard nextOrderId={nextOrderId} profitBps={rewardValues.profitBps ?? 1200} wbtc2Eth={wbtc2Eth} />
                     {/* BTCSTR Chart Section */}
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mt-6">
                         <div className="flex items-center justify-between mb-4">

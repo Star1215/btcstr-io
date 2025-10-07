@@ -14,12 +14,13 @@ export const TeamWallet = isDevnet ? '0xfb11bc70Cb3C874FBB54EB4ED39020e4b26c95FC
 
 export const WETH = isDevnet ? '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd' : '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 
-export const WBTC_ADDRESS = isDevnet ? '0xF15cEc66bF86B488df580E1350e98D63B4E012fA' : '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
+export const WBTC_ADDRESS = isDevnet ? '0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117' : '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 // Attention: PNKSTR is v2 LP but uniswap v3, v4 LP on Mainnet
-export const PNKSTR_ADDRESS = isDevnet ? '0x8A3391A505Ea43e6994574939ff2FbF124E84c1d' : '0xc50673EDb3A7b94E8CAD8a7d4E0cD68864E33eDF';
-export const BTCSTR_ADDRESS = isDevnet ? '0xB9F11B5DE201F8E0Dc013215FdBf6178c4A24A62' : '0xB9F11B5DE201F8E0Dc013215FdBf6178c4A24A62';
+// export const PNKSTR_ADDRESS = isDevnet ? '0x8A3391A505Ea43e6994574939ff2FbF124E84c1d' : '0xc50673EDb3A7b94E8CAD8a7d4E0cD68864E33eDF';
+export const BTCSTR_ADDRESS = isDevnet ? '0xFdbd911F0D8348f67d0A7A2d3f1b0Ac02270370f' : '0xB9F11B5DE201F8E0Dc013215FdBf6178c4A24A62';
 
-
+export const WBTC_DECIMALS = 8;
+export const BTCSTR_TS = 1000000000
 
 export const rpcUrl = isDevnet ? 'https://bsc-testnet-rpc.publicnode.com' : 'https://ethereum-rpc.publicnode.com';
 
