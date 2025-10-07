@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { RainbowProvider } from '@/context'
 
 export const metadata: Metadata = {
   title: 'BTCStrategy-BTCSTR',
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        {children}
+        <RainbowProvider>
+          {children}
+        </RainbowProvider>
         <Analytics />
       </body>
     </html>

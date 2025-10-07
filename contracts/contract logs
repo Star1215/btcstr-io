@@ -1,0 +1,160 @@
+BTC_STRATEGY_BSC_TESTNET_v1
+    • 8% to buy WBTC 
+    • 1% to burn $BTCSTR 
+    • 1% to burn $PNKSTR 
+    • 1% to Team  
+
+BTC_STRATEGY_BSC_TESTNET_v2
+    • 8.5% to buy WBTC 
+    • 1.5% to burn $BTCSTR 
+    • 1% to Team  
+
+
+
+// BSC Testnet Contracts
+Universal Router on Tesnet
+universal_router = 0x87FD5305E6a40F378da124864B2D479c2028BD86
+Pancake V2 Factory:  0x6725F303b657a9451d8BA641348b6761A6CC7a17
+Pancake V2 Router:   0xD99D1c33F9fC3444f8101754aBC46c52416550D1
+
+
+TeamWallet:         0xfb11bc70Cb3C874FBB54EB4ED39020e4b26c95FC
+WBNB:               0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd
+
+<!-- Token Configure Steps -->
+1. createPair()
+2. Add LP on Dex
+3. enableTrading()
+
+
+<!-- Test Lists -->
+1. backBurnTest                                 ✓✓
+2. backTransTest                                ✓✓
+3. backPnkSTRTest                               ✓✓
+4. buy/sell fee allocation                      ✓✓
+5. swapback                                     ✓✓
+6. buy & sell BTC                               
+
+
+TS = 1B
+maxWallet = totalSupply / 100 = 0.01B = 10M
+swapTokensAtAmount = (totalSupply * 5) / 10000 = 1000M * 5 / 10000 = 0.5M = 500k
+
+0.01 BNB / 0.1 B
+0.0001      BNB swap output --> 0.001 B = 1M
+0.000001    BNB swap output --> 9975
+
+<!-- Test3: add UpdateMin&Rewards -->
+<!-- TestWBTC:           0xF15cEc66bF86B488df580E1350e98D63B4E012fA
+Total Supply:       1000000000 = 1B
+Decimals:           6
+Add LP:             0.03 WBNB /0.3 Billion -->
+
+TestWBTC:           0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117
+Total Supply:       1000000000 = 1B
+Decimals:           8
+Add LP:             0.03 WBNB /0.3 Billion
+
+TPnkSTR:            0x8A3391A505Ea43e6994574939ff2FbF124E84c1d
+Total Supply:       1000000000 = 1B
+Decimals:           18
+Add LP:             0.01 WBNB / 0.1 Billion
+
+
+TestBTC_STR:        0xB9F11B5DE201F8E0Dc013215FdBf6178c4A24A62
+Decimals:           18
+Add LP:             0.01 WBNB / 0.1 Billion
+
+
+9999999999999999999999999999
+100000000000000000
+30000000000000000
+30000000000000000
+1000000000000000
+<!-- Test2: fix  swapToPnkSTRAndBurn:: swapExactTokensForTokensSupportingFeeOnTransferTokens -->
+<!-- TestWBTC:           0x4781c12814b26CfB12981E3BC1BcC49022211197
+Total Supply:       1000000000 = 1B
+Decimals:           6
+Add LP:             0.03 WBNB /0.3 Billion
+
+
+TUSDT:              0xC9BFb25285FF83FE972DB20Dba91118efA6bdfA5
+Total Supply:       1000000000
+Decimals:           18
+Add LP:             0.01 WBNB / 0.1 Billion
+
+
+TestBTC_STR:        0x417f44cDb19De03F117c025ceCF3827c566E86f5
+Decimals:           18
+Add LP:             0.01 WBNB / 0.1 Billion -->
+
+
+<!-- Test1 -->
+<!-- 
+TestWBTC:           0x566D06Ba6CC6be50F00821582Db87a47ea6Ce8ae
+Total Supply:       1000000000
+Decimals:           6
+Add LP:             0.03/3000
+
+TUSDT:              0x2147292fABD8a3EFb43bbfe2Af8D7a293BC5Dc74
+Decimals:           18
+Add LP:             0.03/9    
+
+TestBTC_STR:        0xA2edf3E856490BB8ed83946436cE845015c52639
+Decimals:           18
+Add LP:             0.1/500 
+-->
+
+
+
+// Ethereum Mainnet
+
+Uniswap V2 Factory:                     0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f
+Uniswap V2 Router:                      0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+
+
+TeamWallet:                             0xE30619534E3B4B14aC5526f85CCC493e651ac70a
+WETH:                                   0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+
+WBTC:                                   0x2260fac5e5542a773aa44fbcfedf7c193bc2c599
+Uniswap V2 LP:                          0xBb2b8038a1640196FbE3e38816F3e67Cba72D940
+19M
+
+PNKSTR:                                 0xc50673EDb3A7b94E8CAD8a7d4E0cD68864E33eDF
+Uniswap V4 LP:                          0xbdb0f9c31367485f85e691f638345f3de673a78effaff71ce34bc7ff1d54fddc
+9M
+
+Uniswap V3 LP:                          0x2b1a1262D8A9886F949787d85C41344476D2B00e
+500k
+
+
+
+// Target
+littlefireson
+i want to create a ERC 20 token called $BTCSTR Bitcoin Strategy
+
+i need two products
+1 $BTCSTR ERC20 deploy
+2 user interface like 
+https://pepestrategy.io/
+
+
+
+reference:
+$PNKSTR
+https://etherscan.io/token/0xc50673edb3a7b94e8cad8a7d4e0cd68864e33edf#code
+$STRPNK
+https://etherscan.io/token/0x24b5664083b89ae7c2b7a4a6efea472a6d47314c
+$PEPESTR
+https://etherscan.io/token/0x4250569cdce5065c96b597b5982f6e6d9c329714#code
+
+ticker: $BTCSTR
+tokenomics: 1B 
+
+
+11% tax for each transaction:
+composition
+8% to buy WBTC (0x2260fac5e5542a773aa44fbcfedf7c193bc2c599)
+1% to burn $BTCSTR 
+1% to burn $PNKSTR 0xc50673EDb3A7b94E8CAD8a7d4E0cD68864E33eDF
+1% to Team ( need specific address: 0xE30619534E3B4B14aC5526f85CCC493e651ac70a )
