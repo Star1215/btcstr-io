@@ -6,8 +6,9 @@ import { ethers } from "ethers"; // BigNumber and constants are now part of ethe
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS, BTCSTR_TS, WBTC_DECIMALS } from "@/config";
+import { BTCSTR_ADDRESS, BTCSTR_TS, isDevnet, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
+import { bscTestnet, mainnet } from 'wagmi/chains' // example
 
 
 type Orders = {
@@ -20,7 +21,7 @@ type Orders = {
 
 export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth }: { nextOrderId: number, profitBps: number, wbtc2Eth: number }) {
 
-    console.log('debug ordercard id::', nextOrderId, profitBps)
+    // console.log('debug ordercard id::', nextOrderId, profitBps)
     const { isConnected, address, chainId, status } = useAccount();
     const { writeContract, writeContractAsync } = useWriteContract()
     const [activeTab, setActiveTab] = useState<"holding" | "sold">("holding")
@@ -38,6 +39,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth }: { nextOr
             for (let k = 0; k < nextOrderId; k++) {
                 try {
                     const orderDetail = await readContract(config, {
+                        chainId: isDevnet ? bscTestnet.id : mainnet.id,
                         address: BTCSTR_ADDRESS,
                         abi: BTCSTR_ABI,
                         functionName: 'orders',

@@ -8,10 +8,11 @@ import { ethers } from "ethers"; // BigNumber and constants are now part of ethe
 import { useAccount, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS, BTCSTR_TS, DEX_URL, SCAN_URL, WBTC_DECIMALS } from "@/config";
+import { BTCSTR_ADDRESS, BTCSTR_TS, DEX_URL, isDevnet, SCAN_URL, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
 import OrderCard from "./ordercard";
-
+// whichever chain your contract is on
+import { bscTestnet, mainnet } from 'wagmi/chains' // example
 
 type HoldingStats = {
     eth: number;
@@ -54,6 +55,7 @@ export default function Home() {
         const fetchContractStats = async () => {
             try {
                 const result = await readContract(config, {
+                    chainId: isDevnet ? bscTestnet.id : mainnet.id,
                     address: BTCSTR_ADDRESS,
                     abi: BTCSTR_ABI,
                     functionName: 'stats',
@@ -68,6 +70,7 @@ export default function Home() {
                 // })
 
                 const _wbtc2Eth = await readContract(config, {
+                    chainId: isDevnet ? bscTestnet.id : mainnet.id,
                     address: BTCSTR_ADDRESS,
                     abi: BTCSTR_ABI,
                     functionName: 'previewSell',
@@ -96,6 +99,7 @@ export default function Home() {
         const fetchContractValues = async () => {
             try {
                 const values = await multicall(config, {
+                    chainId: isDevnet ? bscTestnet.id : mainnet.id,
                     contracts: [
                         {
                             address: BTCSTR_ADDRESS,
@@ -148,12 +152,12 @@ export default function Home() {
         // Fetch immediately on mount
         fetchContractStats();
 
-        fetchContractValues()
+        // fetchContractValues()
 
         // then run both every 10 seconds
         const interval = setInterval(() => {
             fetchContractStats();
-            fetchContractValues();
+            // fetchContractValues();
         }, 30_000);
 
         // Cleanup when component unmounts or dependencies change
@@ -163,61 +167,62 @@ export default function Home() {
         };
     }, [isPending]);
 
-    // useEffect(() => {
-    //     const fetchContractValues = async () => {
-    //         try {
-    //             const values = await multicall(config, {
-    //                 contracts: [
-    //                     {
-    //                         address: BTCSTR_ADDRESS,
-    //                         abi: BTCSTR_ABI as any,
-    //                         functionName: "minWbtcBuy",
-    //                         args: [],
-    //                     },
-    //                     {
-    //                         address: BTCSTR_ADDRESS,
-    //                         abi: BTCSTR_ABI as any,
-    //                         functionName: "txReward",
-    //                         args: [],
-    //                     },
-    //                     {
-    //                         address: BTCSTR_ADDRESS,
-    //                         abi: BTCSTR_ABI as any,
-    //                         functionName: "PROFIT_BPS",
-    //                         args: [],
-    //                     },
-    //                     {
-    //                         address: BTCSTR_ADDRESS,
-    //                         abi: BTCSTR_ABI as any,
-    //                         functionName: "nextOrderId",
-    //                         args: [],
-    //                     },
+    useEffect(() => {
+        const fetchContractValues = async () => {
+            try {
+                const values = await multicall(config, {
+                    chainId: isDevnet ? bscTestnet.id : mainnet.id,
+                    contracts: [
+                        {
+                            address: BTCSTR_ADDRESS,
+                            abi: BTCSTR_ABI as any,
+                            functionName: "minWbtcBuy",
+                            args: [],
+                        },
+                        {
+                            address: BTCSTR_ADDRESS,
+                            abi: BTCSTR_ABI as any,
+                            functionName: "txReward",
+                            args: [],
+                        },
+                        {
+                            address: BTCSTR_ADDRESS,
+                            abi: BTCSTR_ABI as any,
+                            functionName: "PROFIT_BPS",
+                            args: [],
+                        },
+                        {
+                            address: BTCSTR_ADDRESS,
+                            abi: BTCSTR_ABI as any,
+                            functionName: "nextOrderId",
+                            args: [],
+                        },
 
-    //                 ],
-    //             });
-    //             // Consider Profit BPS is private
-    //             const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
-    //             console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
-    //             setRewardValues({
-    //                 minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.0001,
-    //                 txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.00001,
-    //                 profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
-    //             })
-    //             setNextOrderId(
-    //                 _nextOrderId.status === 'success'
-    //                     ? Number(_nextOrderId.result)
-    //                     : 1
-    //             )
-    //             // if (_orders.status !== 'failure')
-    //             //     setOrders(_orders.result as any);
-    //         } catch (error) {
-    //             console.error('Error fetching contract values:', error);
-    //         }
+                    ],
+                });
+                // Consider Profit BPS is private
+                const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
+                // console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
+                setRewardValues({
+                    minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.0001,
+                    txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.00001,
+                    profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
+                })
+                setNextOrderId(
+                    _nextOrderId.status === 'success'
+                        ? Number(_nextOrderId.result)
+                        : 1
+                )
+                // if (_orders.status !== 'failure')
+                //     setOrders(_orders.result as any);
+            } catch (error) {
+                console.error('Error fetching contract values:', error);
+            }
 
-    //     }
-    //     fetchContractValues()
+        }
+        fetchContractValues()
 
-    // }, [isPending, BTCSTR_ADDRESS, isConnected])
+    }, [isPending, BTCSTR_ADDRESS, isConnected])
 
 
     const handleBuyWBTC = async () => {
