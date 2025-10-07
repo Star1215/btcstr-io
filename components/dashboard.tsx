@@ -8,7 +8,7 @@ import { ethers } from "ethers"; // BigNumber and constants are now part of ethe
 import { useAccount, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS, BTCSTR_TS, WBTC_DECIMALS } from "@/config";
+import { BTCSTR_ADDRESS, BTCSTR_TS, DEX_URL, SCAN_URL, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
 import OrderCard from "./ordercard";
 
@@ -154,7 +154,7 @@ export default function Home() {
         const interval = setInterval(() => {
             fetchContractStats();
             fetchContractValues();
-        }, 10_000);
+        }, 30_000);
 
         // Cleanup when component unmounts or dependencies change
         return () => {
@@ -271,7 +271,11 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-white/80 text-sm">Trade BTCSTR</span>
+                        <span className="text-white/80 text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg">
+                            <a href={DEX_URL} target="_blank">
+                                Trade BTCSTR
+                            </a>
+                        </span>
                         {/* <button className="bg-[#4169E1] hover:bg-[#3659d1] text-white px-6 py-2.5 rounded-lg font-medium transition-colors">
               Connect Wallet
             </button> */}
@@ -287,7 +291,9 @@ export default function Home() {
 
                         {/* View Treasury Button */}
                         <button className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors z-10">
-                            View treasury
+                            <a href={SCAN_URL + BTCSTR_ADDRESS} target="_blank">
+                                View treasury
+                            </a>
                         </button>
 
                         {/* Live Holdings Badge */}
@@ -403,7 +409,7 @@ export default function Home() {
 
                         <div className="bg-black rounded-xl overflow-hidden">
                             <iframe
-                                src="https://www.geckoterminal.com/eth/pools/0x1234567890abcdef?embed=1&info=0&swaps=1"
+                                src="https://www.geckoterminal.com/eth/pools/0x5f9b7e441e00373a83eee20f1366a7d32ec53d56?embed=1&info=0&swaps=1"
                                 className="w-full h-[600px] border-0"
                                 title="BTCSTR Chart"
                             />
@@ -424,7 +430,7 @@ export default function Home() {
                                     href="https://twitter.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-white/80 hover:text-white transition-colors"
+                                    className="text-white/80 hover:text-white transition-colors bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full"
                                 >
                                     X
                                 </a>
@@ -432,7 +438,7 @@ export default function Home() {
                                     href="https://telegram.org"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-white/80 hover:text-white transition-colors"
+                                    className="text-white/80 hover:text-white transition-colors bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full"
                                 >
                                     Telegram
                                 </a>

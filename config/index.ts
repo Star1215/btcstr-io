@@ -20,9 +20,10 @@ export const WBTC_ADDRESS = isDevnet ? '0x9eF04E9845Faa99DECDbfbCf4cBE38aEa32061
 export const BTCSTR_ADDRESS = isDevnet ? '0xFfD95eD840eF17565Cc7696796731F991C4bD0BD' : '0xB9F11B5DE201F8E0Dc013215FdBf6178c4A24A62';
 
 export const WBTC_DECIMALS = 8;
-export const BTCSTR_TS = 1000000000
+export const BTCSTR_TS = 1000000000;
 
 export const rpcUrl = isDevnet ? 'https://bsc-testnet-rpc.publicnode.com' : 'https://ethereum-rpc.publicnode.com';
-
+export const SCAN_URL = isDevnet ? 'https://testnet.bscscan.com/address/' : 'https://etherscan.io/address/';
+export const DEX_URL = isDevnet ? 'https://pancakeswap.finance/swap?chain=bscTestnet&outputCurrency=0xFfD95eD840eF17565Cc7696796731F991C4bD0BD&inputCurrency=tBNB' : 'https://pancakeswap.finance/swap?chain=bscTestnet&outputCurrency=0xFfD95eD840eF17565Cc7696796731F991C4bD0BD&inputCurrency=tBNB'
 
 
