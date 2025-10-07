@@ -352,7 +352,8 @@ export default function Home() {
                                         <path d="M12 12l8-5" />
                                     </svg>
                                 </div> */}
-                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">🐸</div>
+                                {/* <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">🐸</div> */}
+                                <img src="/logo.png" alt="BTCSTR Logo" width={48} height={48} className="bg-white/20 rounded-full" />
                                 <div>
                                     <div className="text-white/60 text-sm mb-1">BURNED $BTCSTR</div>
                                     <div className="flex items-baseline gap-2">
