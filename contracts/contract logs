@@ -49,6 +49,34 @@ swapTokensAtAmount = (totalSupply * 5) / 10000 = 1000M * 5 / 10000 = 0.5M = 500k
 WBTC 0.3 BNB / 0.3B
 0.0001      BNB swap output --> 0.1 M
 path: ["0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd", "0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117"]
+
+
+0.03 WBNB / 3M = 3000k          --> 0.03 / 3000
+
+0.031 / 3000k - 100k            --> 0.031 / 2900
+
+0.032 / 3000k - 200k            --> 0.032 / 2800
+
+
+path[0] = WBTC_TOKEN;
+path[1] = uniswapRouter.WETH();
+path[2] = address(this);
+
+path: [0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117, 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd, 0xFdbd911F0D8348f67d0A7A2d3f1b0Ac02270370f]
+
+<!-- Test5: add SLIPPAGE on sellWBTC -->
+TestWBTC:           0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117
+Total Supply:       10M
+Decimals:           8
+Add LP:             0.03 WBNB / 3M
+
+
+TestBTC_STR:        0xFfD95eD840eF17565Cc7696796731F991C4bD0BD
+Decimals:           18
+Add LP:             0.01 WBNB / 0.1 Billion
+
+
+
 <!-- Test4: remove PnkSTR Burn -->
 TestWBTC:           0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117
 Total Supply:       10M

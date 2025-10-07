@@ -6,6 +6,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { multicall, readContract } from '@wagmi/core'
 import { ethers } from "ethers"; // BigNumber and constants are now part of ethers
 import { useAccount, useWriteContract } from "wagmi";
+import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
 import { BTCSTR_ADDRESS, BTCSTR_TS, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
@@ -33,7 +34,7 @@ export default function Home() {
     const [isPending, setIsPending] = useState(false);
     const [nextOrderId, setNextOrderId] = useState(1);
 
-    const [wbtc2Eth, setWbtc2Eth] = useState(1/1000000)
+    const [wbtc2Eth, setWbtc2Eth] = useState(1 / 10000000000)
     const [holdingStats, setHoldingStats] = useState<HoldingStats>({
         eth: 0,
         wbtc: 0,
@@ -42,8 +43,8 @@ export default function Home() {
     })
 
     const [rewardValues, setRewardValues] = useState<RewardValues>({
-        minWbtcBuy: 0.001,
-        txReward: 0.0001,
+        minWbtcBuy: 0.0001,
+        txReward: 0.00001,
         profitBps: 1200
     })
 
@@ -74,7 +75,7 @@ export default function Home() {
                 })
 
                 console.log('debug contract stats::', _wbtc2Eth);
-                if(typeof _wbtc2Eth == 'bigint') {
+                if (typeof _wbtc2Eth == 'bigint') {
                     setWbtc2Eth(Number(ethers.formatEther(_wbtc2Eth)))
                 }
                 // if (!cancelled && Array.isArray(result) && typeof result[0] === 'bigint' && typeof tokenBalance == 'bigint') {
@@ -92,20 +93,6 @@ export default function Home() {
             }
         };
 
-        // Fetch immediately on mount
-        fetchContractStats();
-
-        // Then fetch every 30 seconds
-        const interval = setInterval(fetchContractStats, 10_000);
-
-        // Cleanup when component unmounts or dependencies change
-        return () => {
-            cancelled = true;
-            clearInterval(interval);
-        };
-    }, [isPending]);
-
-    useEffect(() => {
         const fetchContractValues = async () => {
             try {
                 const values = await multicall(config, {
@@ -139,10 +126,10 @@ export default function Home() {
                 });
                 // Consider Profit BPS is private
                 const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
-                // console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
+                console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
                 setRewardValues({
-                    minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.001,
-                    txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.0001,
+                    minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.0001,
+                    txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.00001,
                     profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
                 })
                 setNextOrderId(
@@ -157,13 +144,91 @@ export default function Home() {
             }
 
         }
+
+        // Fetch immediately on mount
+        fetchContractStats();
+
         fetchContractValues()
 
-    }, [isPending, BTCSTR_ADDRESS, isConnected])
+        // then run both every 10 seconds
+        const interval = setInterval(() => {
+            fetchContractStats();
+            fetchContractValues();
+        }, 10_000);
+
+        // Cleanup when component unmounts or dependencies change
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [isPending]);
+
+    // useEffect(() => {
+    //     const fetchContractValues = async () => {
+    //         try {
+    //             const values = await multicall(config, {
+    //                 contracts: [
+    //                     {
+    //                         address: BTCSTR_ADDRESS,
+    //                         abi: BTCSTR_ABI as any,
+    //                         functionName: "minWbtcBuy",
+    //                         args: [],
+    //                     },
+    //                     {
+    //                         address: BTCSTR_ADDRESS,
+    //                         abi: BTCSTR_ABI as any,
+    //                         functionName: "txReward",
+    //                         args: [],
+    //                     },
+    //                     {
+    //                         address: BTCSTR_ADDRESS,
+    //                         abi: BTCSTR_ABI as any,
+    //                         functionName: "PROFIT_BPS",
+    //                         args: [],
+    //                     },
+    //                     {
+    //                         address: BTCSTR_ADDRESS,
+    //                         abi: BTCSTR_ABI as any,
+    //                         functionName: "nextOrderId",
+    //                         args: [],
+    //                     },
+
+    //                 ],
+    //             });
+    //             // Consider Profit BPS is private
+    //             const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
+    //             console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
+    //             setRewardValues({
+    //                 minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.0001,
+    //                 txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.00001,
+    //                 profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
+    //             })
+    //             setNextOrderId(
+    //                 _nextOrderId.status === 'success'
+    //                     ? Number(_nextOrderId.result)
+    //                     : 1
+    //             )
+    //             // if (_orders.status !== 'failure')
+    //             //     setOrders(_orders.result as any);
+    //         } catch (error) {
+    //             console.error('Error fetching contract values:', error);
+    //         }
+
+    //     }
+    //     fetchContractValues()
+
+    // }, [isPending, BTCSTR_ADDRESS, isConnected])
 
 
     const handleBuyWBTC = async () => {
-        if (!address || !isConnected) return;
+        if (!address || !isConnected) {
+            toast.error("Wallet is not connected")
+            return;
+        }
+        if (holdingStats.eth < rewardValues.minWbtcBuy + rewardValues.txReward) {
+            toast.error("Not enought ETH to next purchase");
+            return;
+        }
         try {
             setIsPending(true);
             let tx;

@@ -1177,6 +1177,7 @@ contract BTC_STRATEGY is ERC20, Ownable, ReentrancyGuard {
         payable(0x000000000000000000000000000000000000dEaD);
 
     uint256 public PROFIT_BPS = 1200;
+    uint256 public SLIPPAGE = 95;
 
     struct Order {
         uint256 ethSpent;
@@ -1342,6 +1343,11 @@ contract BTC_STRATEGY is ERC20, Ownable, ReentrancyGuard {
 
     function updateProfitBps(uint256 _profit_bps) external onlyOwner {
         PROFIT_BPS = _profit_bps;
+    }
+
+    function updateSlippage(uint256 _slippage) external onlyOwner {
+        require(_slippage <= 100, "Invalid slippage");
+        SLIPPAGE = _slippage;
     }
 
     function excludeFromFees(address account, bool excluded) public onlyOwner {
@@ -1593,7 +1599,7 @@ contract BTC_STRATEGY is ERC20, Ownable, ReentrancyGuard {
             order.wbtcBought,
             path
         );
-        uint256 minOut = (amounts[2] * 95) / 100;
+        uint256 minOut = (amounts[2] * SLIPPAGE) / 100;
 
         uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
             order.wbtcBought,
