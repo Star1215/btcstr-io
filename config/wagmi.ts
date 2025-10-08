@@ -28,8 +28,8 @@ export const config = getDefaultConfig({
     projectId: projectId,
     chains: [mainnet, bscTestnet],
     ssr: true, // If your dApp uses server side rendering (SSR)
-    transports: {
-        [mainnet.id]: http(),
-        [bscTestnet.id]: http(),
-    },
+    // transports: {
+    //     [mainnet.id]: http(),
+    //     [bscTestnet.id]: http(),
+    // },
 });

@@ -17,13 +17,13 @@ export const WETH = isDevnet ? '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd' : '0
 export const WBTC_ADDRESS = isDevnet ? '0x9eF04E9845Faa99DECDbfbCf4cBE38aEa3206117' : '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599';
 // Attention: PNKSTR is v2 LP but uniswap v3, v4 LP on Mainnet
 // export const PNKSTR_ADDRESS = isDevnet ? '0x8A3391A505Ea43e6994574939ff2FbF124E84c1d' : '0xc50673EDb3A7b94E8CAD8a7d4E0cD68864E33eDF';
-export const BTCSTR_ADDRESS = isDevnet ? '0xFfD95eD840eF17565Cc7696796731F991C4bD0BD' : '0xB9F11B5DE201F8E0Dc013215FdBf6178c4A24A62';
+export const BTCSTR_ADDRESS = isDevnet ? '0xFfD95eD840eF17565Cc7696796731F991C4bD0BD' : '0x1e4dbf46873e99ac8f2b7648c265cae142020976';
 
 export const WBTC_DECIMALS = 8;
 export const BTCSTR_TS = 1000000000;
 
 export const rpcUrl = isDevnet ? 'https://bsc-testnet-rpc.publicnode.com' : 'https://ethereum-rpc.publicnode.com';
 export const SCAN_URL = isDevnet ? 'https://testnet.bscscan.com/address/' : 'https://etherscan.io/address/';
-export const DEX_URL = isDevnet ? 'https://pancakeswap.finance/swap?chain=bscTestnet&outputCurrency=0xFfD95eD840eF17565Cc7696796731F991C4bD0BD&inputCurrency=tBNB' : 'https://pancakeswap.finance/swap?chain=bscTestnet&outputCurrency=0xFfD95eD840eF17565Cc7696796731F991C4bD0BD&inputCurrency=tBNB'
+export const DEX_URL = isDevnet ? `https://pancakeswap.finance/swap?chain=bscTestnet&outputCurrency=${BTCSTR_ADDRESS}&inputCurrency=tBNB` : `https://app.uniswap.org/swap?chain=mainnet&inputCurrency=NATIVE&outputCurrency=${BTCSTR_ADDRESS}`
 
 
