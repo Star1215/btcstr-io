@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { multicall, readContract } from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import { ethers } from "ethers"; // BigNumber and constants are now part of ethers
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS, BTCSTR_TS, isDevnet, WBTC_DECIMALS } from "@/config";
+import { WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
-import { bscTestnet, mainnet } from 'wagmi/chains' // example
 
 
 type Orders = {
@@ -19,11 +18,11 @@ type Orders = {
     sold: boolean;
 }
 
-export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth }: { nextOrderId: number, profitBps: number, wbtc2Eth: number }) {
+export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, btcstr, chosenChainId }: { nextOrderId: number, profitBps: number, wbtc2Eth: number, btcstr: string, chosenChainId: number }) {
 
     // console.log('debug ordercard id::', nextOrderId, profitBps)
-    const { isConnected, address, chainId, status } = useAccount();
-    const { writeContract, writeContractAsync } = useWriteContract()
+    const { isConnected, address } = useAccount();
+    const { writeContractAsync } = useWriteContract()
     const [activeTab, setActiveTab] = useState<"holding" | "sold">("holding")
     const [isPending, setIsPending] = useState(false);
     const [orders, setOrders] = useState<Orders[]>([]);
@@ -39,8 +38,8 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth }: { nextOr
             for (let k = 0; k < nextOrderId; k++) {
                 try {
                     const orderDetail = await readContract(config, {
-                        chainId: isDevnet ? bscTestnet.id : mainnet.id,
-                        address: BTCSTR_ADDRESS,
+                        chainId: chosenChainId as 1 | 97,
+                        address: btcstr as `0x${string}`,
                         abi: BTCSTR_ABI,
                         functionName: 'orders',
                         args: [k]
@@ -68,7 +67,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth }: { nextOr
         if (nextOrderId >= 2) {
             fetchOrders();
         }
-    }, [nextOrderId, isConnected, BTCSTR_ADDRESS, isPending])
+    }, [nextOrderId, isConnected, btcstr, chosenChainId, isPending])
 
     const handleSellWBTC = async (_orderId: number, rate: number) => {
         console.log('debug sell::', _orderId, rate)
@@ -84,7 +83,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth }: { nextOr
             setIsPending(true);
             let tx;
             tx = await writeContractAsync({
-                address: BTCSTR_ADDRESS,
+                address: btcstr as `0x${string}`,
                 abi: BTCSTR_ABI,
                 functionName: "sellWBTC",
                 args: [_orderId],

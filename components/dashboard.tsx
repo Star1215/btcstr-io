@@ -1,19 +1,19 @@
 "use client"
 
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { multicall, readContract } from '@wagmi/core'
 import { ethers } from "ethers"; // BigNumber and constants are now part of ethers
 import { useAccount, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS, BTCSTR_TS, DEX_URL, isDevnet, SCAN_URL, WBTC_DECIMALS } from "@/config";
+import { BTCSTR_ADDRESS, BTCSTR_ADDRESS_ID, BTCSTR_TS, DEX_URL, isDevnet, SCAN_URL, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
 import OrderCard from "./ordercard";
 // whichever chain your contract is on
 import { bscTestnet, mainnet } from 'wagmi/chains' // example
-import { coinbaseWallet } from "wagmi/connectors";
+
 
 type HoldingStats = {
     eth: number;
@@ -30,10 +30,10 @@ type RewardValues = {
 
 
 export default function Home() {
-    const { isConnected, address, chainId, status } = useAccount();
+    const { isConnected, address, chainId } = useAccount();
     console.log('debug chainId::', chainId, isDevnet)
-    const { writeContract, writeContractAsync } = useWriteContract()
-    const [activeTab, setActiveTab] = useState<"holding" | "sold">("holding")
+
+    const { writeContractAsync } = useWriteContract()
     const [isPending, setIsPending] = useState(false);
     const [nextOrderId, setNextOrderId] = useState(1);
 
@@ -51,15 +51,25 @@ export default function Home() {
         profitBps: 1200
     })
 
+    const _chosenChainId = useMemo(() => {
+        // Make sure nullish coalescing applies correctly
+        return chainId ?? (isDevnet ? bscTestnet.id : mainnet.id)
+    }, [chainId, isDevnet])
+
+    const _btcstrAddress = useMemo(() => {
+        return chainId
+            ? BTCSTR_ADDRESS_ID[chainId]
+            : BTCSTR_ADDRESS
+    }, [chainId])
+
+
     useEffect(() => {
         let cancelled = false;
-
         const fetchContractStats = async () => {
             try {
-                console.log('debug here', chainId ?? isDevnet ? bscTestnet.id : mainnet.id, BTCSTR_ADDRESS)
                 const result = await readContract(config, {
-                    chainId: chainId ?? isDevnet ? bscTestnet.id : mainnet.id,
-                    address: BTCSTR_ADDRESS,
+                    chainId: _chosenChainId as 1 | 97,
+                    address: _btcstrAddress as `0x${string}`,
                     abi: BTCSTR_ABI,
                     functionName: 'stats',
                 });
@@ -72,8 +82,8 @@ export default function Home() {
                 // })
 
                 const _wbtc2Eth = await readContract(config, {
-                    chainId: chainId ?? isDevnet ? bscTestnet.id : mainnet.id,
-                    address: BTCSTR_ADDRESS,
+                    chainId: _chosenChainId as 1 | 97,
+                    address: _btcstrAddress as `0x${string}`,
                     abi: BTCSTR_ABI,
                     functionName: 'previewSell',
                     args: [ethers.parseUnits('1', WBTC_DECIMALS)]
@@ -98,68 +108,12 @@ export default function Home() {
             }
         };
 
-        // const fetchContractValues = async () => {
-        //     try {
-        //         const values = await multicall(config, {
-        //             chainId: chainId ?? isDevnet ? bscTestnet.id : mainnet.id,
-        //             contracts: [
-        //                 {
-        //                     address: BTCSTR_ADDRESS,
-        //                     abi: BTCSTR_ABI as any,
-        //                     functionName: "minWbtcBuy",
-        //                     args: [],
-        //                 },
-        //                 {
-        //                     address: BTCSTR_ADDRESS,
-        //                     abi: BTCSTR_ABI as any,
-        //                     functionName: "txReward",
-        //                     args: [],
-        //                 },
-        //                 {
-        //                     address: BTCSTR_ADDRESS,
-        //                     abi: BTCSTR_ABI as any,
-        //                     functionName: "PROFIT_BPS",
-        //                     args: [],
-        //                 },
-        //                 {
-        //                     address: BTCSTR_ADDRESS,
-        //                     abi: BTCSTR_ABI as any,
-        //                     functionName: "nextOrderId",
-        //                     args: [],
-        //                 },
-
-        //             ],
-        //         });
-        //         // Consider Profit BPS is private
-        //         const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
-        //         console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
-        //         setRewardValues({
-        //             minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.0001,
-        //             txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.00001,
-        //             profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
-        //         })
-        //         setNextOrderId(
-        //             _nextOrderId.status === 'success'
-        //                 ? Number(_nextOrderId.result)
-        //                 : 1
-        //         )
-        //         // if (_orders.status !== 'failure')
-        //         //     setOrders(_orders.result as any);
-        //     } catch (error) {
-        //         console.error('Error fetching contract values:', error);
-        //     }
-
-        // }
-
         // Fetch immediately on mount
         fetchContractStats();
-
-        // fetchContractValues()
 
         // then run both every 10 seconds
         const interval = setInterval(() => {
             fetchContractStats();
-            // fetchContractValues();
         }, 30_000);
 
         // Cleanup when component unmounts or dependencies change
@@ -167,34 +121,34 @@ export default function Home() {
             cancelled = true;
             clearInterval(interval);
         };
-    }, [isPending]);
+    }, [isPending, chainId]);
 
     useEffect(() => {
         const fetchContractValues = async () => {
             try {
                 const values = await multicall(config, {
-                    chainId: chainId ?? isDevnet ? bscTestnet.id : mainnet.id,
+                    chainId: _chosenChainId as 1 | 97,
                     contracts: [
                         {
-                            address: BTCSTR_ADDRESS,
+                            address: _btcstrAddress as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "minWbtcBuy",
                             args: [],
                         },
                         {
-                            address: BTCSTR_ADDRESS,
+                            address: _btcstrAddress as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "txReward",
                             args: [],
                         },
                         {
-                            address: BTCSTR_ADDRESS,
+                            address: _btcstrAddress as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "PROFIT_BPS",
                             args: [],
                         },
                         {
-                            address: BTCSTR_ADDRESS,
+                            address: _btcstrAddress as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "nextOrderId",
                             args: [],
@@ -215,8 +169,6 @@ export default function Home() {
                         ? Number(_nextOrderId.result)
                         : 1
                 )
-                // if (_orders.status !== 'failure')
-                //     setOrders(_orders.result as any);
             } catch (error) {
                 console.error('Error fetching contract values:', error);
             }
@@ -224,7 +176,7 @@ export default function Home() {
         }
         fetchContractValues()
 
-    }, [isPending, BTCSTR_ADDRESS, isConnected])
+    }, [isPending, BTCSTR_ADDRESS, isConnected, chainId])
 
 
     const handleBuyWBTC = async () => {
@@ -240,7 +192,7 @@ export default function Home() {
             setIsPending(true);
             let tx;
             tx = await writeContractAsync({
-                address: BTCSTR_ADDRESS,
+                address: _btcstrAddress as `0x${string}`,
                 abi: BTCSTR_ABI,
                 functionName: "buyWBTC",
                 args: [],
@@ -298,7 +250,7 @@ export default function Home() {
 
                         {/* View Treasury Button */}
                         <button className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors z-10">
-                            <a href={SCAN_URL + BTCSTR_ADDRESS} target="_blank">
+                            <a href={SCAN_URL + _btcstrAddress} target="_blank">
                                 View treasury
                             </a>
                         </button>
@@ -407,7 +359,7 @@ export default function Home() {
                     </div>
 
                     {/* Orders Section */}
-                    <OrderCard nextOrderId={nextOrderId} profitBps={rewardValues.profitBps ?? 1200} wbtc2Eth={wbtc2Eth} />
+                    <OrderCard nextOrderId={nextOrderId} profitBps={rewardValues.profitBps ?? 1200} wbtc2Eth={wbtc2Eth} btcstr={_btcstrAddress} chosenChainId={_chosenChainId}/>
                     {/* BTCSTR Chart Section */}
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mt-6">
                         <div className="flex items-center justify-between mb-4">

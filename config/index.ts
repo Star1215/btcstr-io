@@ -18,6 +18,10 @@ export const WBTC_ADDRESS = isDevnet ? '0x9eF04E9845Faa99DECDbfbCf4cBE38aEa32061
 // Attention: PNKSTR is v2 LP but uniswap v3, v4 LP on Mainnet
 // export const PNKSTR_ADDRESS = isDevnet ? '0x8A3391A505Ea43e6994574939ff2FbF124E84c1d' : '0xc50673EDb3A7b94E8CAD8a7d4E0cD68864E33eDF';
 export const BTCSTR_ADDRESS = isDevnet ? '0xFfD95eD840eF17565Cc7696796731F991C4bD0BD' : '0x1e4dbf46873e99ac8f2b7648c265cae142020976';
+export const BTCSTR_ADDRESS_ID: Record<number, string> = {
+    1: "0x1e4dbf46873e99ac8f2b7648c265cae142020976",
+    97: "0xFfD95eD840eF17565Cc7696796731F991C4bD0BD",
+  };
 
 export const WBTC_DECIMALS = 8;
 export const BTCSTR_TS = 1000000000;
