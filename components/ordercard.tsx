@@ -6,7 +6,7 @@ import { ethers } from "ethers"; // BigNumber and constants are now part of ethe
 import { useAccount, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { WBTC_DECIMALS } from "@/config";
+import { BTCSTR_ADDRESS_ID, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
 
 
@@ -18,7 +18,7 @@ type Orders = {
     sold: boolean;
 }
 
-export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, btcstr, chosenChainId }: { nextOrderId: number, profitBps: number, wbtc2Eth: number, btcstr: string, chosenChainId: number }) {
+export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, chosenChainId }: { nextOrderId: number, profitBps: number, wbtc2Eth: number, chosenChainId: number }) {
 
     // console.log('debug ordercard id::', nextOrderId, profitBps)
     const { isConnected, address } = useAccount();
@@ -39,7 +39,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, btcstr, ch
                 try {
                     const orderDetail = await readContract(config, {
                         chainId: chosenChainId as 1 | 97,
-                        address: btcstr as `0x${string}`,
+                        address: BTCSTR_ADDRESS_ID[chosenChainId] as `0x${string}`,
                         abi: BTCSTR_ABI,
                         functionName: 'orders',
                         args: [k]
@@ -56,7 +56,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, btcstr, ch
                             _tempSoldOrderCount++;
                         }
                     }
-                    console.log('debug ordercard kth Detail::', k, orderDetail)
+                    // console.log('debug ordercard kth Detail::', k, orderDetail)
                 } catch (error) {
                     console.error('Error fetching contract stats:', error);
                 }
@@ -67,7 +67,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, btcstr, ch
         if (nextOrderId >= 2) {
             fetchOrders();
         }
-    }, [nextOrderId, isConnected, btcstr, chosenChainId, isPending])
+    }, [nextOrderId, isConnected, chosenChainId, isPending])
 
     const handleSellWBTC = async (_orderId: number, rate: number) => {
         console.log('debug sell::', _orderId, rate)
@@ -83,7 +83,7 @@ export default function OrderCard({ nextOrderId, profitBps, wbtc2Eth, btcstr, ch
             setIsPending(true);
             let tx;
             tx = await writeContractAsync({
-                address: btcstr as `0x${string}`,
+                address: BTCSTR_ADDRESS_ID[chosenChainId] as `0x${string}`,
                 abi: BTCSTR_ABI,
                 functionName: "sellWBTC",
                 args: [_orderId],

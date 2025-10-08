@@ -8,7 +8,7 @@ import { ethers } from "ethers"; // BigNumber and constants are now part of ethe
 import { useAccount, useWriteContract } from "wagmi";
 import toast from 'react-hot-toast';
 import BTCSTR_ABI from '../config/BTCSTR.json';
-import { BTCSTR_ADDRESS, BTCSTR_ADDRESS_ID, BTCSTR_TS, DEX_URL, isDevnet, SCAN_URL, WBTC_DECIMALS } from "@/config";
+import { BTCSTR_ADDRESS_ID, BTCSTR_TS, DEX_URL_ID, isDevnet, SCAN_URL_ID, WBTC_DECIMALS } from "@/config";
 import { config } from "@/config/wagmi";
 import OrderCard from "./ordercard";
 // whichever chain your contract is on
@@ -31,7 +31,7 @@ type RewardValues = {
 
 export default function Home() {
     const { isConnected, address, chainId } = useAccount();
-    console.log('debug chainId::', chainId, isDevnet)
+
 
     const { writeContractAsync } = useWriteContract()
     const [isPending, setIsPending] = useState(false);
@@ -55,21 +55,14 @@ export default function Home() {
         // Make sure nullish coalescing applies correctly
         return chainId ?? (isDevnet ? bscTestnet.id : mainnet.id)
     }, [chainId, isDevnet])
-
-    const _btcstrAddress = useMemo(() => {
-        return chainId
-            ? BTCSTR_ADDRESS_ID[chainId]
-            : BTCSTR_ADDRESS
-    }, [chainId])
-
-
+    console.log('debug chainId, isDevnet, chosen::', chainId, isDevnet, _chosenChainId)
     useEffect(() => {
         let cancelled = false;
         const fetchContractStats = async () => {
             try {
                 const result = await readContract(config, {
                     chainId: _chosenChainId as 1 | 97,
-                    address: _btcstrAddress as `0x${string}`,
+                    address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                     abi: BTCSTR_ABI,
                     functionName: 'stats',
                 });
@@ -83,7 +76,7 @@ export default function Home() {
 
                 const _wbtc2Eth = await readContract(config, {
                     chainId: _chosenChainId as 1 | 97,
-                    address: _btcstrAddress as `0x${string}`,
+                    address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                     abi: BTCSTR_ABI,
                     functionName: 'previewSell',
                     args: [ethers.parseUnits('1', WBTC_DECIMALS)]
@@ -121,7 +114,7 @@ export default function Home() {
             cancelled = true;
             clearInterval(interval);
         };
-    }, [isPending, chainId]);
+    }, [isPending, _chosenChainId]);
 
     useEffect(() => {
         const fetchContractValues = async () => {
@@ -130,25 +123,25 @@ export default function Home() {
                     chainId: _chosenChainId as 1 | 97,
                     contracts: [
                         {
-                            address: _btcstrAddress as `0x${string}`,
+                            address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "minWbtcBuy",
                             args: [],
                         },
                         {
-                            address: _btcstrAddress as `0x${string}`,
+                            address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "txReward",
                             args: [],
                         },
                         {
-                            address: _btcstrAddress as `0x${string}`,
+                            address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "PROFIT_BPS",
                             args: [],
                         },
                         {
-                            address: _btcstrAddress as `0x${string}`,
+                            address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                             abi: BTCSTR_ABI as any,
                             functionName: "nextOrderId",
                             args: [],
@@ -176,7 +169,7 @@ export default function Home() {
         }
         fetchContractValues()
 
-    }, [isPending, BTCSTR_ADDRESS, isConnected, chainId])
+    }, [isPending, isConnected, _chosenChainId])
 
 
     const handleBuyWBTC = async () => {
@@ -192,7 +185,7 @@ export default function Home() {
             setIsPending(true);
             let tx;
             tx = await writeContractAsync({
-                address: _btcstrAddress as `0x${string}`,
+                address: BTCSTR_ADDRESS_ID[_chosenChainId] as `0x${string}`,
                 abi: BTCSTR_ABI,
                 functionName: "buyWBTC",
                 args: [],
@@ -231,7 +224,7 @@ export default function Home() {
                     </div>
                     <div className="flex items-center gap-4">
                         <span className="text-white/80 text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg">
-                            <a href={DEX_URL} target="_blank">
+                            <a href={DEX_URL_ID[_chosenChainId] + BTCSTR_ADDRESS_ID[_chosenChainId]} target="_blank">
                                 Trade BTCSTR
                             </a>
                         </span>
@@ -250,7 +243,7 @@ export default function Home() {
 
                         {/* View Treasury Button */}
                         <button className="absolute top-6 right-6 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors z-10">
-                            <a href={SCAN_URL + _btcstrAddress} target="_blank">
+                            <a href={SCAN_URL_ID[_chosenChainId] + BTCSTR_ADDRESS_ID[_chosenChainId]} target="_blank">
                                 View treasury
                             </a>
                         </button>
@@ -359,7 +352,7 @@ export default function Home() {
                     </div>
 
                     {/* Orders Section */}
-                    <OrderCard nextOrderId={nextOrderId} profitBps={rewardValues.profitBps ?? 1200} wbtc2Eth={wbtc2Eth} btcstr={_btcstrAddress} chosenChainId={_chosenChainId}/>
+                    <OrderCard nextOrderId={nextOrderId} profitBps={rewardValues.profitBps ?? 1200} wbtc2Eth={wbtc2Eth} chosenChainId={_chosenChainId} />
                     {/* BTCSTR Chart Section */}
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mt-6">
                         <div className="flex items-center justify-between mb-4">
