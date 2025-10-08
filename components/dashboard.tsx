@@ -31,13 +31,16 @@ type RewardValues = {
 
 export default function Home() {
     const { isConnected, address, chainId } = useAccount();
-
+    const _chosenChainId = useMemo(() => {
+        // Make sure nullish coalescing applies correctly
+        return chainId ?? (isDevnet ? bscTestnet.id : mainnet.id)
+    }, [chainId, isDevnet])
 
     const { writeContractAsync } = useWriteContract()
     const [isPending, setIsPending] = useState(false);
     const [nextOrderId, setNextOrderId] = useState(1);
 
-    const [wbtc2Eth, setWbtc2Eth] = useState(1 / 10000000000)
+    const [wbtc2Eth, setWbtc2Eth] = useState(_chosenChainId == 97 ? 1 / 10000000000 : 27)
     const [holdingStats, setHoldingStats] = useState<HoldingStats>({
         eth: 0,
         wbtc: 0,
@@ -46,15 +49,12 @@ export default function Home() {
     })
 
     const [rewardValues, setRewardValues] = useState<RewardValues>({
-        minWbtcBuy: 0.0001,
-        txReward: 0.00001,
+        minWbtcBuy: _chosenChainId == 97 ? 0.0001 : 2,
+        txReward: _chosenChainId == 97 ? 0.00001 : 0.01,
         profitBps: 1200
     })
 
-    const _chosenChainId = useMemo(() => {
-        // Make sure nullish coalescing applies correctly
-        return chainId ?? (isDevnet ? bscTestnet.id : mainnet.id)
-    }, [chainId, isDevnet])
+
     console.log('debug chainId, isDevnet, chosen::', chainId, isDevnet, _chosenChainId)
     useEffect(() => {
         let cancelled = false;
@@ -153,8 +153,8 @@ export default function Home() {
                 const [_minWbtcBuy, _txReward, _profitBps, _nextOrderId] = values
                 console.log('debug contract values::', _minWbtcBuy, _txReward, _profitBps, _nextOrderId);
                 setRewardValues({
-                    minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : 0.0001,
-                    txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : 0.00001,
+                    minWbtcBuy: _minWbtcBuy.status == 'success' ? Number(ethers.formatEther(BigInt(_minWbtcBuy.result as bigint))) : (_chosenChainId == 1 ? 2 : 0.0001),
+                    txReward: _txReward.status == 'success' ? Number(ethers.formatEther(BigInt(_txReward.result as bigint))) : (_chosenChainId == 1 ? 0.01 : 0.00001 ),
                     profitBps: _profitBps.status == 'success' ? Number(_profitBps.result as bigint) : 1200,
                 })
                 setNextOrderId(
